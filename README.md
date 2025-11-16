@@ -15,8 +15,6 @@ Cy_Arcade est un système client-serveur TCP permettant de gérer des bornes d'a
 - Afficher les classements
 - Recharger les comptes
 
----
-
 ## Architecture
 
 ```
@@ -31,8 +29,6 @@ Cy_Arcade est un système client-serveur TCP permettant de gérer des bornes d'a
 - **Serveur** : Python 3.7+
 - **Base de données** : PostgreSQL
 - **Protocole** : TCP avec messages textuels délimités par `\n`
-
----
 
 ## Structure du projet
 
