@@ -3,8 +3,6 @@
 Projet de programmation réseau L3 Informatique - CY Cergy Paris Université  
 **Année universitaire** : 2025-2026
 
----
-
 ## Description
 
 Cy_Arcade est un système client-serveur TCP permettant de gérer des bornes d'arcade connectées à une base de données PostgreSQL. Le projet implémente un protocole de communication personnalisé pour :
