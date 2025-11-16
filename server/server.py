@@ -2,6 +2,7 @@
 Serveur TCP
 """
 
+import os
 import sys
 import socket
 import logging
@@ -12,7 +13,10 @@ import configparser
 # CONFIGURATION
 # ============================================================
 
-def load_config(config_file):
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+SERVER_CONFIG_FILE = os.path.join(BASE_DIR, 'server.conf')
+
+def load_config(config_file = SERVER_CONFIG_FILE):
     """Charge la configuration du serveur et de la base de données"""
     config = configparser.ConfigParser()
     config.read(config_file, encoding='utf-8')
@@ -23,11 +27,11 @@ def load_config(config_file):
         'CLIENT_TIMEOUT': config.getint('SERVER', 'TIMEOUT'),
         'MAX_COMMANDS': config.getint('SERVER', 'MAX_COMMANDS'),
 
-        'DB_HOST': config.get('DATABASE', 'HOST'),
-        'DB_PORT': config.getint('DATABASE', 'PORT'),
-        'DB_NAME': config.get('DATABASE', 'NAME'),
-        'DB_USER': config.get('DATABASE', 'USER'),
-        'DB_PASSWORD': config.get('DATABASE', 'PASSWORD'),
+        'DB_HOST': config.get('DATABASE', 'DB_HOST'),
+        'DB_PORT': config.getint('DATABASE', 'DB_PORT'),
+        'DB_NAME': config.get('DATABASE', 'DB_NAME'),
+        'DB_USER': config.get('DATABASE', 'DB_USER'),
+        'DB_PASSWORD': config.get('DATABASE', 'DB_PASSWORD'),
         
         'LOG_FILE': config.get('LOGGING', 'LOG_FILE')
     }
@@ -53,7 +57,7 @@ def setup_logging(log_file):
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
 
-config = load_config("server.conf")
+config = load_config()
 setup_logging(config['LOG_FILE'])
 
 SERVER_IP = config['SERVER_IP']
