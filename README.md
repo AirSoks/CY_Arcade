@@ -169,7 +169,7 @@ java ArcadeClient
 
 ## Sécurité
 
-- Timeout client : 10 secondes par défaut
+- Timeout client : 30 secondes par défaut
 - Limite de commandes : 5 par connexion
 - Validation des entrées côté serveur
 - Gestion des erreurs de connexion
@@ -178,8 +178,8 @@ java ArcadeClient
 ## Logs
 
 Les logs sont automatiquement générés dans :
-- **Serveur** : `server/server.log` (détails + console)
-- **Client** : `client/client.log` (horodatage des commandes)
+- **Serveur** : `server/server.log`
+- **Client** : `client/client.log`
 
 ## Équipe
 
