@@ -1,17 +1,11 @@
 # Cy_Arcade - Système de Gestion de Bornes d'Arcade
 
-Projet de programmation réseau L3 Informatique - CY Cergy Paris Université  
-**Année universitaire** : 2025-2026
+> Projet de programmation réseau - L3 Informatique  
+> CY Cergy Paris Université | 2025-2026
 
-## Description
+## À propos
 
-Cy_Arcade est un système client-serveur TCP permettant de gérer des bornes d'arcade connectées à une base de données PostgreSQL. Le projet implémente un protocole de communication personnalisé pour :
-- Authentifier les joueurs via leur carte
-- Gérer le solde de jetons
-- Lancer et terminer des parties
-- Calculer les récompenses
-- Afficher les classements
-- Recharger les comptes
+Cy_Arcade est un système client-serveur TCP permettant de gérer des bornes d'arcade connectées à une base de données PostgreSQL. Le projet implémente un protocole de communication personnalisé pour gérer l'authentification, les parties, les récompenses et les classements.
 
 ## Architecture
 
@@ -20,35 +14,95 @@ Cy_Arcade est un système client-serveur TCP permettant de gérer des bornes d'a
 │   Client    │ ◄──────────────────► │   Serveur   │ ◄──────────────────► │  PostgreSQL │
 │   (Java)    │   Protocole custom   │   (Python)  │                      │             │
 └─────────────┘                      └─────────────┘                      └─────────────┘
+															                     ▲ 
+														                         │
+								  ┌────────────────┐                             │
+								  │  Interface Web │ ◄───────────────────────────┘
+							      │     (PHP)      │ 
+							      └────────────────┘
 ```
 
-### Technologies utilisées
-- **Client** : Java (JDK 8+)
-- **Serveur** : Python 3.7+
+Le système repose sur une architecture comme ceci :
+- Le **client Java** gère l'interface utilisateur et les interactions avec les bornes d'arcade
+- Le **serveur Python** orchestre la logique métier et valide les protocoles de communication
+- L'**interface web PHP** permet la gestion administrative et la consultation des profils utilisateurs
+- La **base PostgreSQL** centralise toutes les données (joueurs, parties, scores, transactions)
+
+## Fonctionnalités
+
+### Système de bornes (Client Java + Serveur Python)
+
+**START** - Démarrage de partie
+- Authentification du joueur via carte
+- Vérification du solde
+- Débit des jetons et lancement de la partie
+
+**END** - Fin de partie et récompenses
+- Enregistrement du score
+- Calcul automatique des récompenses selon le score
+- Mise à jour du solde
+
+**RANKING** - Classements
+- Top 3 des meilleurs scores par jeu
+
+**RECHARGE** - Gestion du compte
+- Recharge de jetons (CB ou espèces)
+
+**START_BORNE** - Initialisation
+- Récupération des jeux disponibles
+
+### Interface web (PHP)
+
+**Espace Client**
+- Consultation du profil (pseudo, solde, statistiques)
+- Historique des parties jouées
+- Recharge de jetons en ligne
+
+**Espace Administrateur**
+- Dashboard avec statistiques globales (clients, bornes, parties)
+- Gestion de l'état des bornes (Disponible, En Maintenance, HS)
+- Gestion de l'état des jeux
+
+### Technologies
+
+- **Client bornes** : Java 8+
+- **Serveur métier** : Python 3.7+ avec psycopg2
+- **Interface web** : PHP 7+
 - **Base de données** : PostgreSQL
-- **Protocole** : TCP avec messages textuels délimités par `\n`
+- **Communication** : Protocole custom sur TCP
 
 ## Structure du projet
 
 ```
 Cy_Arcade/
-├── README.md
-├── .gitignore
 ├── server/
-│   ├── server.conf        # Configuration serveur et BD
-│   ├── server.py          # Point d'entrée du serveur
-│   ├── protocols.py       # Gestion des protocoles
-│   ├── queries.py         # Requêtes base de données
-│   ├── utils.py           # Fonctions utilitaires
-│   └── server.log         # Logs (généré automatiquement)
+│   ├── server.py          # Serveur TCP principal
+│   ├── protocols.py       # Gestion des 5 protocoles
+│   ├── queries.py         # Requêtes SQL et logique métier
+│   ├── utils.py           # Validation, configuration, logging
+│   └── server.conf        # Configuration (serveur + BD)
 ├── client/
-│   ├── client.conf        # Configuration client
-│   ├── ArcadeClient.java  # Client principal
-│   ├── SocketConnexion.java   # Gestion socket + logs
-│   ├── ClientConfig.java      # Chargement configuration
-│   └── client.log         # Logs client (généré automatiquement)
+│   ├── ArcadeClient.java      # Interface utilisateur
+│   ├── SocketConnexion.java   # Abstraction socket + logs
+│   ├── ClientConfig.java      # Gestion configuration
+│   └── client.conf            # Paramètres (host, port, borne_id)
+├── web/
+│   ├── index.php              # Page d'accueil
+│   ├── connexion.php          # Authentification
+│   ├── profile.php            # Profil client
+│   ├── admin.php              # Dashboard admin
+│   ├── gestion_systeme.php    # Gestion bornes/jeux
+│   ├── recharge.php           # Recharge de jetons
+│   ├── verif.php              # Vérification credentials
+│   ├── logout.php             # Déconnexion
+│   ├── styles.css             # Styles
+│   └── config/
+│       └── config.php         # Configuration BD
+├── SQL/
+│   ├── DDL.sql            # Schéma de la base
+│   └── DML.sql            # Données de test
 └── doc/
-    └── rapport.pdf        # Rapport de projet
+    └── rapport.pdf        # Documentation complète
 ```
 
 ## Configuration
@@ -60,31 +114,18 @@ Cy_Arcade/
 HOST = 0.0.0.0
 PORT = 50001
 TIMEOUT = 30
-MAX_COMMANDS = 10
+MAX_COMMANDS = 5
 
 [DATABASE]
-DB_HOST = localhost
+DB_HOST = ******
 DB_PORT = 5432
-DB_NAME = cy_arcade
-DB_USER = postgres
-DB_PASSWORD = votre_mot_de_passe
+DB_NAME = ******
+DB_USER = ******
+DB_PASSWORD = ******
 
 [LOGGING]
-LOG_FILE = server.log
+LOG_FILE = server/server.log
 ```
-
-**Paramètres serveur :**
-- `HOST` : Adresse d'écoute (0.0.0.0 = toutes interfaces, localhost = local uniquement)
-- `PORT` : Port d'écoute (1024-65535)
-- `TIMEOUT` : Timeout client en secondes
-- `MAX_COMMANDS` : Nombre maximum de commandes par connexion
-
-**Paramètres base de données :**
-- `DB_HOST` : Adresse du serveur PostgreSQL
-- `DB_PORT` : Port PostgreSQL (défaut : 5432)
-- `DB_NAME` : Nom de la base de données
-- `DB_USER` : Utilisateur PostgreSQL
-- `DB_PASSWORD` : Mot de passe
 
 ### Client (`client/client.conf`)
 
@@ -92,39 +133,6 @@ LOG_FILE = server.log
 host = localhost
 port = 50001
 borne_id = 1
-```
-
-**Paramètres client :**
-- `host` : Adresse du serveur
-- `port` : Port du serveur
-- `borne_id` : Identifiant de la borne d'arcade
-
-## Installation
-
-### Prérequis
-
-**Serveur (Python) :**
-```bash
-pip install psycopg2-binary
-```
-
-**Client (Java) :**
-- JDK 8 ou supérieur
-
-### Lancer le serveur
-
-```bash
-python server.py
-```
-
-### Lancer le client
-
-```bash
-# Compiler
-javac ArcadeClient.java SocketConnexion.java
-
-# Exécuter
-java ArcadeClient
 ```
 
 ## Protocole de communication
@@ -167,13 +175,18 @@ ncat -l 50001
 java ArcadeClient
 ```
 
-## Sécurité
+## Sécurité et robustesse
 
+**Système de bornes (Java/Python)**
 - Timeout client : 30 secondes par défaut
 - Limite de commandes : 5 par connexion
 - Validation des entrées côté serveur
 - Gestion des erreurs de connexion
 - Logs détaillés des actions
+
+**Interface web (PHP)**
+- Authentification avec mots de passe hashés (`password_hash()` / `password_verify()`)
+- Contrôle d'accès basé sur les rôles (Client / Admin)
 
 ## Logs
 
@@ -181,16 +194,20 @@ Les logs sont automatiquement générés dans :
 - **Serveur** : `server/server.log`
 - **Client** : `client/client.log`
 
-## Équipe
+## Contributeurs
 
-- **Mathéo COSTA** : matheo.costa4@etu.cyu.fr
-- **Tenzin ZURKHANG** : tenzin-rigsang.zurkhang@etu.cyu.fr
-- **YANG Kaiwei** : --
+- **Mathéo COSTA** - matheo.costa4@etu.cyu.fr
+- **Tenzin ZURKHANG** - tenzin-rigsang.zurkhang@etu.cyu.fr
+- **YANG Kaiwei**
 
 ## Documentation
 
-- **Rapport complet** : `doc/rapport.pdf`
+Rapport complet disponible dans [`docs/rapport.pdf`]
 
-## Licence
+## Attentes
 
-Projet académique - CY Cergy Paris Université © 2025-2026
+Les attendus auto-notés sont disponibles dans [`docs/Grille de notation de projet.pdf`]
+
+---
+
+**Projet académique - CY Cergy Paris Université © 2025-2026**
