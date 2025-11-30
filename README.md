@@ -35,27 +35,71 @@ Cy_Arcade/
 ├── README.md
 ├── .gitignore
 ├── server/
-│   ├── server.conf              # Configuration du serveur
-│   ├── server.py                # Serveur TCP Python
-│   └── server.log               # Logs du serveur (généré automatiquement)
+│   ├── server.conf        # Configuration serveur et BD
+│   ├── server.py          # Point d'entrée du serveur
+│   ├── protocols.py       # Gestion des protocoles
+│   ├── queries.py         # Requêtes base de données
+│   ├── utils.py           # Fonctions utilitaires
+│   └── server.log         # Logs (généré automatiquement)
 ├── client/
-│   ├── ArcadeClient.java        # Client Java
-│   └── SocketConnexion.java     # Gestion de la connexion TCP
+│   ├── client.conf        # Configuration client
+│   ├── ArcadeClient.java  # Client principal
+│   ├── SocketConnexion.java   # Gestion socket + logs
+│   ├── ClientConfig.java      # Chargement configuration
+│   └── client.log         # Logs client (généré automatiquement)
 └── doc/
-    └── rapport.pdf              # Rapport de projet
+    └── rapport.pdf        # Rapport de projet
 ```
 
 ## Configuration
 
-### Fichier `server.conf`
+### Serveur (`server/server.conf`)
 
-**Paramètres modifiables :**
-- `HOST` : Adresse IP du serveur (0.0.0.0 - localhost pour toutes les interfaces)
+```ini
+[SERVER]
+HOST = 0.0.0.0
+PORT = 50001
+TIMEOUT = 30
+MAX_COMMANDS = 10
+
+[DATABASE]
+DB_HOST = localhost
+DB_PORT = 5432
+DB_NAME = cy_arcade
+DB_USER = postgres
+DB_PASSWORD = votre_mot_de_passe
+
+[LOGGING]
+LOG_FILE = server.log
+```
+
+**Paramètres serveur :**
+- `HOST` : Adresse d'écoute (0.0.0.0 = toutes interfaces, localhost = local uniquement)
 - `PORT` : Port d'écoute (1024-65535)
 - `TIMEOUT` : Timeout client en secondes
 - `MAX_COMMANDS` : Nombre maximum de commandes par connexion
 
-## Lancement
+**Paramètres base de données :**
+- `DB_HOST` : Adresse du serveur PostgreSQL
+- `DB_PORT` : Port PostgreSQL (défaut : 5432)
+- `DB_NAME` : Nom de la base de données
+- `DB_USER` : Utilisateur PostgreSQL
+- `DB_PASSWORD` : Mot de passe
+
+### Client (`client/client.conf`)
+
+```ini
+host = localhost
+port = 50001
+borne_id = 1
+```
+
+**Paramètres client :**
+- `host` : Adresse du serveur
+- `port` : Port du serveur
+- `borne_id` : Identifiant de la borne d'arcade
+
+## Installation
 
 ### Prérequis
 
@@ -85,16 +129,21 @@ java ArcadeClient
 
 ## Protocole de communication
 
-### Format des messages
+### Commandes disponibles
 
-Tous les messages sont terminés par `\n`.
-
-### Codes d'erreur
-
-- `ERROR UNKNOWN_COMMAND` : Commande non reconnue
-- `ERROR INVALID_SYNTAX` : Syntaxe incorrecte
-- `ERROR TIMEOUT` : Timeout du client
-- `ERROR MAX_COMMANDS_REACHED` : Limite de commandes atteinte
+Une fois le client lancé :
+```
+> help                          # Afficher l'aide
+> PSEUDO 123456                 # Authentification
+> BALANCE 123456                # Consulter le solde
+> START_GAME 123456 1 2         # Lancer une partie
+> END_GAME 123456 1 2 3500      # Terminer avec score
+> REWARD 123456                 # Récupérer récompense
+> RANKING 2                     # Voir le classement
+> RECHARGE 123456 50 CB         # Recharger 50 jetons
+> disconnect                    # Se déconnecter
+> quit                          # Quitter
+```
 
 ## Tests
 
@@ -128,7 +177,9 @@ java ArcadeClient
 
 ## Logs
 
-Les logs sont enregistrés dans `server/server.log` et affichés dans la console.
+Les logs sont automatiquement générés dans :
+- **Serveur** : `server/server.log` (détails + console)
+- **Client** : `client/client.log` (horodatage des commandes)
 
 ## Équipe
 
