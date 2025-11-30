@@ -1,3 +1,4 @@
 # Enlever les .log et le fichier de config
 *.conf
 *.log
+config*

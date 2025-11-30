@@ -13,9 +13,8 @@ public class ArcadeClient {
     // Le SocketConnexion pour la communication avec le serveur
     private static SocketConnexion socketConnexion = null;
 
-    // Les valeurs par défaut pour l'hôte et le port
-    private static final String DEFAULT_HOST = "localhost";
-    private static final int DEFAULT_PORT = 50001;
+    // Configuration de la borne
+    private static ClientConfig config = null;
 
     /** 
      * Méthode principale du client arcade.
@@ -23,11 +22,30 @@ public class ArcadeClient {
      */
     public static void main(String[] args) {
         System.out.println("=== Client Arcade ===");
+        
+        // Charger la configuration
+        try {
+            config = ClientConfig.load("client/client.conf");
+            System.out.println("Configuration chargée: " + config.getHost() + ":" + config.getPort() + " (Borne ID: " + config.getBorneId() + ")");
+        } catch (IOException e) {
+            System.err.println("Erreur lors du chargement de la configuration: " + e.getMessage());
+            System.exit(1);
+        }
+        
+        // Connexion automatique au démarrage
+        connect(config.getHost(), config.getPort());
+        
+        // Si connecté, initialiser la borne et afficher les jeux disponibles
+        if (socketConnexion != null) {
+            initializeBorne();
+        }
+        
         help();
+        
         while (true) {
             System.out.print("> ");
 
-            // L'entrée tapé par l'utilisateur
+            // L'entrée tapée par l'utilisateur
             String input = scanner.nextLine().trim();
             
             if (input.isEmpty()) continue;
@@ -40,6 +58,49 @@ public class ArcadeClient {
         scanner.close();
     }
 
+    /**
+     * Initialise la borne et affiche les jeux disponibles.
+     */
+    private static void initializeBorne() {
+        try {
+            // Envoyer la commande START_BORNE avec l'ID de la borne
+            socketConnexion.sendCommand("START_BORNE " + config.getBorneId());
+            
+            // Lire la réponse du serveur
+            String response = socketConnexion.readLine();
+            
+            // Parser et afficher les jeux disponibles
+            if (response.startsWith("OK ")) {
+                String jeuxData = response.substring(3).trim();
+                displayAvailableGames(jeuxData);
+            } else {
+                System.err.println("Erreur lors de l'initialisation: " + response);
+            }
+        } catch (IOException e) {
+            System.err.println("Erreur lors de l'initialisation de la borne: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Affiche les jeux disponibles à partir des données reçues.
+     * @param jeuxData Les données des jeux
+     */
+    private static void displayAvailableGames(String jeuxData) {
+        System.out.println("\nJeux disponibles :");
+        
+        if (jeuxData.isEmpty()) {
+            System.out.println("  Aucun jeu disponible.");
+            return;
+        }
+        
+        String[] jeux = jeuxData.split(",");
+        for (String jeu : jeux) {
+            String[] parts = jeu.split(":");
+            System.out.println("  - " + parts[0] + " " + parts[1]);
+        }
+        System.out.println();
+    }
+
     /** 
      * Gère les commandes utilisateur.
      * @param input La commande entrée par l'utilisateur
@@ -49,20 +110,22 @@ public class ArcadeClient {
         String cmd = parts[0].toLowerCase();
         switch (cmd) {
             case "connect":
-                connect(DEFAULT_HOST, DEFAULT_PORT);
+                connect(config.getHost(), config.getPort());
                 break;
             case "disconnect":
                 disconnect();
-                break;
-            case "read":
-                int lines = parts.length > 1 ? Integer.parseInt(parts[1]) : 1;
-                read(lines);
                 break;
             case "help":
                 help();
                 break;
             default:
-                if (sendCommand(input)) { read(1); }
+                if (!isValidCommand(input)){
+                    System.out.println("La commande ne respecte pas la forme: COMMAND <parametres>.");
+                    break;
+                }
+                if (sendCommand(input)) { 
+                    read(1); 
+                }
         }
     }
 
@@ -148,15 +211,30 @@ public class ArcadeClient {
     }
 
     /** 
+     * Vérifie la structure de la commande selon ce format :
+     * COMMAND <parametres>
+     * @param command La commande à vérifier
+     * @return Boolean Succès de la validation
+     */
+    private static Boolean isValidCommand(String command) {
+        if (command == null) {
+            return false;
+        }
+
+        String regex = "^[A-Z_]+(?:[ ][1-9][0-9]*)+$";
+        return command.trim().matches(regex);
+    }
+
+
+    /** 
      * Affiche l'aide pour les commandes disponibles.
      */
     private static void help() {
         System.out.println("Commandes disponibles:");
-        System.out.println("  connect [host] [port]    - Se connecter au serveur");
-        System.out.println("  disconnect               - Se déconnecter");
-        System.out.println("  read [nb_lignes]         - Lire la réponse du serveur");
-        System.out.println("  quit                     - Quitter");
-        System.out.println("  [nb_lignes] <commande>   - Envoyer une commande au serveur\n");
-        System.out.println("  help                     - Afficher cette aide");
+        System.out.println("  connect                - Se connecter au serveur");
+        System.out.println("  disconnect             - Se déconnecter");
+        System.out.println("  COMMAND <parametres>   - Se déconnecter");
+        System.out.println("  quit                   - Quitter");
+        System.out.println("  help                   - Afficher cette aide");
     }
 }
